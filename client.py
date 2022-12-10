@@ -1,3 +1,5 @@
+"""Client module"""
+
 import json
 import pickle
 import socket
@@ -5,7 +7,8 @@ import socket
 from cryptography.fernet import Fernet
 from dict2xml import dict2xml
 
-from config import setup
+from config import SETUP_DICT
+from server import HOST, PORT, BUFFER
 
 # instance of Fernet class created and key generated
 key = Fernet.generate_key()
@@ -13,46 +16,60 @@ fernet = Fernet(key)
 with open("my_key.key", "wb") as my_key:
     my_key.write(key)
 
-host = "127.0.0.1"
-port = 9000
-buffer = 1024
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-def serialize_dict(pick_format, dictionary):
-    """depending on the choice of the pickling format, the dictionary is serialised"""
-    lower_pick_format = pick_format.lower()
-    if lower_pick_format == "binary":
+def serialize_dict(pickling_format: str, dictionary: dict) -> bytes:
+    """Serializes a dictionary depending on the choice of the pickling format.
+
+    Args:
+        pickling_format (str): ['binary', 'JSON', 'XML'] pickling format to use.
+        dictionary (dict): a Python dictionary.
+
+    Returns:
+        bytes: the Python dictinary serialized in the chosen pickling format.
+    """
+    if pickling_format == "binary":
         serialized_data = pickle.dumps(dictionary)
-    elif lower_pick_format == "json":
+    elif pickling_format == "JSON":
         serialized_data = json.dumps(dictionary).encode()
-    elif lower_pick_format == "xml":
+    elif pickling_format == "XML":
         serialized_data = dict2xml(dictionary, wrap="root", indent="").encode()
-    else:
-        NotImplementedError(f"{pick_format} not implemented.")
     return serialized_data
 
 
-def encrypt_file(text_file):
-    with open(text_file, "rb") as f_orig:
+def encrypt_file(text_path: str) -> bytes:
+    """Opens and encrypts the content of the given file.
+
+    Args:
+        text_path (str): a path to a text file.
+
+    Returns:
+        bytes: encrypted content of the given text file.
+    """
+    with open(text_path, "rb") as f_orig:
         original_file = f_orig.read()
     encrypted = fernet.encrypt(original_file)
-    with open(text_file, "wb") as f_encrypted:
+    with open(text_path, "wb") as f_encrypted:
         f_encrypted.write(encrypted)
     return encrypted
 
 
-def send_file(text_file):
+def send_file(text_path: str) -> None:
+    """Sends a file to the server.
+
+    Args:
+        text_file (str): a path to a text file.
+    """
     try:
-        if setup["encryption_file"]:
-            encrypt_file(text_file)
-        with open(text_file, "rb") as f:
-            print(f)
+        if SETUP_DICT["encryption_file"]:
+            encrypt_file(text_path)
+        with open(text_path, "rb") as in_file:
+            print(in_file)
             while True:
-                file_read = f.read(buffer)
+                file_read = in_file.read(BUFFER)
                 if not file_read:
-                    # file transmitting is done
-                    break
+                    break  # file transmitting is done
                 # use sendall to assure transmission in busy networks
                 s.sendall(file_read)
         print("Successfully sent the file")
@@ -68,11 +85,13 @@ def send_file(text_file):
 
 if __name__ == "__main__":
     try:
-        s.connect((host, port))
+        s.connect((HOST, PORT))
     except ConnectionRefusedError:
         print("There is a problem with the connection.")
-    if setup["sending"] == "dictionary":
-        output_data = serialize_dict(setup["pickling_dict"], setup["dictionary"])
+    if SETUP_DICT["sending"] == "dictionary":
+        output_data = serialize_dict(
+            SETUP_DICT["pickling_dict"], SETUP_DICT["dictionary"]
+        )
         s.send(output_data)
     else:
         send_file("text_file.txt")

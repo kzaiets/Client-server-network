@@ -1,19 +1,24 @@
 """Unit tests server module.
 
 Run tests with the following command:
-python -m pytest test_client.py -vv
+python -m unittest test_client.py -v
 """
 
-from server import transmit_content
-from config import setup
+import unittest
+
+from config import SETUP_DICT
+from server import output
 
 
-def test_transmit_content():
-    """Tests server.transmit_content function."""
-    transmit_mode = "file"
-    setup["output"] = transmit_mode
-    content = "hola"
-    transmit_content(content)
-    with open("output.txt", "r") as in_file:
-        actual_content = in_file.read()
-    assert content == actual_content
+class TestServer(unittest.TestCase):
+    """Test suite for the server module."""
+
+    def test_output(self):
+        """Tests server.transmit_content in a simple setting."""
+        output_mode = "file"
+        SETUP_DICT["output"] = output_mode
+        content = "hola"
+        output(content)
+        with open("output.txt", "r") as in_file:
+            actual_content = in_file.read()
+        self.assertTrue(content == actual_content)
