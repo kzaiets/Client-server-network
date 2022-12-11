@@ -64,3 +64,4 @@ MIT License
 Karina Zaiets: Software Engineer and Software Architect
 Alice Chui: Project Manager and Software Architect
 Flavino Moreira: Tester and Software Architect
+
