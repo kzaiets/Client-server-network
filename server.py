@@ -11,7 +11,7 @@ buffer = 1024
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((host, port))
-# set maximum accept rate to 5 connections"
+# set maximum accept rate to 1 connection"
 s.listen(5)
 
 
@@ -39,7 +39,10 @@ def decrypt_file(text_file):
         # read the encrypted data
         encrypted_data = file.read()
     # Decrypt data
-    decrypted_data = fernet.decrypt(encrypted_data)
+    try:
+        decrypted_data = fernet.decrypt(encrypted_data)
+    except Fernet.InvalidToken as e:
+        print(e)
 
     # Write to the original file
     with open(text_file, "wb") as file:
@@ -48,14 +51,13 @@ def decrypt_file(text_file):
 
 def receive_file(text_file):
     with open(text_file, "wb") as f:
-        print("File opened")
         while True:
             bytes_read = client_socket.recv(buffer)
             if not bytes_read:
                 break
             try:
                 f.write(bytes_read)
-            except Exception as e:  # e is the error message that could occur in the try block
+            except Exception as e:
                 print(e)
     if setup['encryption_file']:
         decrypt_file(text_file)
@@ -69,20 +71,16 @@ def output(contents):
             f.write(contents)
 
 
-while True:
-    client_socket, address = s.accept()
-    print("Connection from: " + str(address))
-    if setup['sending'] == 'dictionary':
-        message = client_socket.recv(buffer)
-        output_content = deserialize_dict(setup['pickling_dict'], message)
-    else:
-        receive_file("text_file.txt")
-        with open("text_file.txt", 'r') as f:
-            output_content = f.read()
-    output(output_content)
-    # disconnect the server
-    client_socket.close()
-    break
+client_socket, address = s.accept()
+print("Connection from: " + str(address))
+if setup['sending'] == 'dictionary':
+    message = client_socket.recv(buffer)
+    output_content = deserialize_dict(setup['pickling_dict'], message)
+else:
+    receive_file("text_file.txt")
+    with open("text_file.txt", 'r') as f:
+        output_content = f.read()
+output(output_content)
 s.close()
 
 

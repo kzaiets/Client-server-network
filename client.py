@@ -46,13 +46,15 @@ def send_file(text_file):
             print(f)
             while True:
                 file_read = f.read(buffer)
+                print(file_read)
                 if not file_read:
                     # file transmitting is done
                     break
                 # use sendall to assure transmission in busy networks
                 s.sendall(file_read)
         print('Successfully sent the file')
-    except TypeError:
+    except TypeError as e:
+        print(e)
         print("There was a problem sending the file.")
 
 
@@ -60,11 +62,16 @@ try:
     s.connect((host, port))
 except ConnectionRefusedError:
     print("There is a problem with the connection.")
-if setup['sending'] == 'dictionary':
-    output_data = serialize_dict(setup['pickling_dict'], setup['dictionary'])
-    s.send(output_data)
-else:
-    send_file("text_file.txt")
+
+try:
+    if setup['sending'] == 'dictionary':
+        output_data = serialize_dict(setup['pickling_dict'], setup['dictionary'])
+        s.send(output_data)
+    else:
+        send_file("text_file.txt")
+except BrokenPipeError as e:
+    print('Run the server file first!')
+
 
 
 

@@ -2,3 +2,4 @@ __pycache__/
 *.key
 .DS_Store
 *.idea
+output.txt
