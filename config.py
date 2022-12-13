@@ -1,11 +1,14 @@
-setup = {
-    # sending options: dictionary/file
-    "sending": "file",
-    "dictionary": {"USA": "Washington D.C.", "France": "Paris", "Ukraine": "Kyiv", "UK": "London"},
-    # pickling options: binary/JSON/XML
-    "pickling_dict": "JSON",
-    # encryption options: True/False
-    "encryption_file": True,
-    # printing options: screen/file
-    "output": "screen"
+"""Configuration options to transmit by a client to the server."""
+
+SETUP = {
+    "sending": "dictionary",  # options: ['dictionary', 'file']
+    "dictionary": {
+        "USA": "Washington D.C.",
+        "France": "Paris",
+        "Ukraine": "Kyiv",
+        "UK": "London",
+    },
+    "pickling_dict": "JSON",  # options: ['binary', 'JSON', 'XML']
+    "encryption_file": True, # options: True/False
+    "output": "screen",  # options: ['screen', 'file']
 }
