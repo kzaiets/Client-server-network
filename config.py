@@ -1,6 +1,6 @@
 """Configuration options to transmit by a client to the server."""
 
-SETUP_DICT = {
+SETUP = {
     "sending": "dictionary",  # options: ['dictionary', 'file']
     "dictionary": {
         "USA": "Washington D.C.",

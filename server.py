@@ -7,7 +7,7 @@ import socket
 import xmltodict
 from cryptography.fernet import Fernet
 
-from config import SETUP_DICT
+from config import SETUP
 
 # source: https://peps.python.org/pep-0008/#constants
 HOST: str = "127.0.0.1"
@@ -73,15 +73,15 @@ def receive_file(text_path: str) -> None:
             # `exception` is the error message that could occur in the try block
             except Exception as exception:
                 print(exception)
-    if SETUP_DICT["encryption_file"]:
+    if SETUP["encryption_file"]:
         decrypt_file(text_path)
 
 
 def output(content) -> None:
     """Transmits a string through either screen or a text file."""
-    if SETUP_DICT["output"] == "screen":
+    if SETUP["output"] == "screen":
         print(content)
-    elif SETUP_DICT["output"] == "file":
+    elif SETUP["output"] == "file":
         with open("output.txt", "w") as out_file:
             out_file.write(content)
 
@@ -100,9 +100,9 @@ if __name__ == "__main__":
     while True:
         client_socket, address = s.accept()
         print("Connection from: " + str(address))
-        if SETUP_DICT["sending"] == "dictionary":
+        if SETUP["sending"] == "dictionary":
             message = client_socket.recv(BUFFER)
-            output_content = deserialize_dict(SETUP_DICT["pickling_dict"], message)
+            output_content = deserialize_dict(SETUP["pickling_dict"], message)
         else:
             receive_file("text_file.txt")
             with open("text_file.txt", "r") as f:

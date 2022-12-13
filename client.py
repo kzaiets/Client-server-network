@@ -7,7 +7,7 @@ import socket
 from cryptography.fernet import Fernet
 from dict2xml import dict2xml
 
-from config import SETUP_DICT
+from config import SETUP
 from server import HOST, PORT, BUFFER
 
 # instance of Fernet class created and key generated
@@ -62,7 +62,7 @@ def send_file(text_path: str) -> None:
         text_file (str): a path to a text file.
     """
     try:
-        if SETUP_DICT["encryption_file"]:
+        if SETUP["encryption_file"]:
             encrypt_file(text_path)
         with open(text_path, "rb") as in_file:
             print(in_file)
@@ -88,9 +88,9 @@ if __name__ == "__main__":
         s.connect((HOST, PORT))
     except ConnectionRefusedError:
         print("There is a problem with the connection.")
-    if SETUP_DICT["sending"] == "dictionary":
+    if SETUP["sending"] == "dictionary":
         output_data = serialize_dict(
-            SETUP_DICT["pickling_dict"], SETUP_DICT["dictionary"]
+            SETUP["pickling_dict"], SETUP["dictionary"]
         )
         s.send(output_data)
     else:
