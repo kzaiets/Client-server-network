@@ -9,6 +9,6 @@ SETUP = {
         "UK": "London",
     },
     "pickling_dict": "JSON",  # options: ['binary', 'JSON', 'XML']
-    "encryption_file": True,
+    "encryption_file": True, # options: True/False
     "output": "screen",  # options: ['screen', 'file']
 }

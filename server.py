@@ -3,16 +3,27 @@
 import json
 import pickle
 import socket
-
 import xmltodict
 from cryptography.fernet import Fernet
-
+import logging
 from config import SETUP
 
+# socket setup
 # source: https://peps.python.org/pep-0008/#constants
 HOST: str = "127.0.0.1"
 PORT: int = 9000
 BUFFER: int = 1024
+
+
+# logging setup
+log_format = f"%(levelname)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=log_format)
+logger = logging.getLogger(__name__)
+
+# file setup
+output_file = "output.txt"
+file_received = "text_file.txt"
+key_file = 'my_key.key'
 
 
 def deserialize_dict(pickling_format: str, dictionary: bytes) -> dict:
@@ -48,33 +59,35 @@ def decrypt_file(text_path: str) -> None:
     Args:
         text_path (str): a path to a text file.
     """
-    loaded_key = key_load("my_key.key")
+    loaded_key = key_load(key_file)
     fernet = Fernet(loaded_key)
     with open(text_path, "rb") as file:
         # read the encrypted data
-        encrypted_data = file.read()  # read the encrypted data
-    decrypted_data = fernet.decrypt(encrypted_data)  # decrypt data
-
+        encrypted_data = file.read()
+    # Decrypt data
+    try:
+        decrypted_data = fernet.decrypt(encrypted_data)
+    except Fernet.InvalidToken as e:
+        logger.warning("Can't decrypt the file, invalid token or value")
+        decrypted_data = None
     # Write to the original file
     with open(text_path, "wb") as file:
         file.write(decrypted_data)
 
-
+            
 def receive_file(text_path: str) -> None:
     """Receives and decrypts a text file"""
     with open(text_path, "wb") as in_file:
-        print("File opened")
         while True:
             bytes_read = client_socket.recv(BUFFER)
             if not bytes_read:
                 break
             try:
                 in_file.write(bytes_read)
-            # `exception` is the error message that could occur in the try block
-            except Exception as exception:
-                print(exception)
-    if SETUP["encryption_file"]:
-        decrypt_file(text_path)
+            except TypeError:
+                logger.warning("TypeError occurred")
+    if SETUP['encryption_file']:
+        decrypt_file(text_file)
 
 
 def output(content) -> None:
@@ -82,33 +95,26 @@ def output(content) -> None:
     if SETUP["output"] == "screen":
         print(content)
     elif SETUP["output"] == "file":
-        with open("output.txt", "w") as out_file:
-            out_file.write(content)
+        with open(output_file, "w") as out_file:
+            out_file.write(str(content))
 
-
-# we need to include `if __name__ == '__main__':` because
-# we cannot import functions implemented in this module
-# from other Python modules without executing all the lines below
-# unless we check that the global variable __name__ is different
-# from the string '__main__'.
 
 if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, PORT))
     s.listen(5)  # set maximum accept rate to 5 connections"
-
-    while True:
-        client_socket, address = s.accept()
-        print("Connection from: " + str(address))
-        if SETUP["sending"] == "dictionary":
-            message = client_socket.recv(BUFFER)
-            output_content = deserialize_dict(SETUP["pickling_dict"], message)
-        else:
-            receive_file("text_file.txt")
-            with open("text_file.txt", "r") as f:
-                output_content = f.read()
-        output(output_content)
-        # disconnect the server
-        client_socket.close()
-        break
+    client_socket, address = s.accept()
+    logger.debug("Connection from: " + str(address))
+    if SETUP['sending'] == 'dictionary':
+        message = client_socket.recv(buffer)
+        output_content = deserialize_dict(SETUP['pickling_dict'], message)
+    else:
+        receive_file(file_received)
+        with open(file_received, 'r') as f:
+            output_content = f.read()
+    output(output_content)
     s.close()
+
+
+
+

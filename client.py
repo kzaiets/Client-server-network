@@ -6,15 +6,27 @@ import socket
 
 from cryptography.fernet import Fernet
 from dict2xml import dict2xml
-
 from config import SETUP
 from server import HOST, PORT, BUFFER
+import logging
+import sys
+from config import setup
+
+# logging setup
+log_format = f"%(levelname)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=log_format)
+logger = logging.getLogger(__name__)
+
+# file setup
+file_sent = "text_file.txt"
+key_file = 'my_key.key'
 
 # instance of Fernet class created and key generated
 key = Fernet.generate_key()
 fernet = Fernet(key)
 with open("my_key.key", "wb") as my_key:
     my_key.write(key)
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -72,22 +84,18 @@ def send_file(text_path: str) -> None:
                     break  # file transmitting is done
                 # use sendall to assure transmission in busy networks
                 s.sendall(file_read)
-        print("Successfully sent the file")
+                logger.debug("File sent!")
     except TypeError:
-        print("There was a problem sending the file.")
+        logger.warning("TypeError occurred")
 
 
-# we need to include `if __name__ == '__main__':` because
-# we cannot import functions implemented in this module
-# from other Python modules without executing all the lines below
-# unless we check that the global variable __name__ is different
-# from the string '__main__'.
 
 if __name__ == "__main__":
     try:
         s.connect((HOST, PORT))
     except ConnectionRefusedError:
-        print("There is a problem with the connection.")
+        logger.warning("There is a problem with the connection.")
+        sys.exit()
     if SETUP["sending"] == "dictionary":
         output_data = serialize_dict(
             SETUP["pickling_dict"], SETUP["dictionary"]
