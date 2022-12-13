@@ -3,14 +3,26 @@ import pickle
 import json
 from cryptography.fernet import Fernet
 from dict2xml import dict2xml
+import logging
+import sys
 from config import setup
+
+# logging setup
+log_format = f"%(levelname)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=log_format)
+logger = logging.getLogger(__name__)
+
+# file setup
+file_sent = "text_file.txt"
+key_file = 'my_key.key'
 
 # instance of Fernet class created and key generated
 key = Fernet.generate_key()
 fernet = Fernet(key)
-with open('my_key.key', 'wb') as my_key:
+with open(key_file, 'wb') as my_key:
     my_key.write(key)
 
+# socket setup
 host = '127.0.0.1'
 port = 9000
 buffer = 1024
@@ -25,7 +37,6 @@ def serialize_dict(pick_format, dictionary):
         serialized_data = json.dumps(dictionary).encode()
     elif pick_format == 'XML':
         serialized_data = dict2xml(dictionary, wrap='root', indent="").encode()
-        print(serialized_data)
     return serialized_data
 
 
@@ -52,25 +63,23 @@ def send_file(text_file):
                     break
                 # use sendall to assure transmission in busy networks
                 s.sendall(file_read)
-        print('Successfully sent the file')
-    except TypeError as e:
-        print(e)
-        print("There was a problem sending the file.")
+                logger.debug("File sent!")
+    except TypeError:
+        logger.warning("TypeError occurred")
 
 
 try:
     s.connect((host, port))
 except ConnectionRefusedError:
-    print("There is a problem with the connection.")
+    logger.warning("There is a problem with the connection.")
+    sys.exit()
 
-try:
-    if setup['sending'] == 'dictionary':
-        output_data = serialize_dict(setup['pickling_dict'], setup['dictionary'])
-        s.send(output_data)
-    else:
-        send_file("text_file.txt")
-except BrokenPipeError as e:
-    print('Run the server file first!')
+if setup['sending'] == 'dictionary':
+    output_data = serialize_dict(setup['pickling_dict'], setup['dictionary'])
+    s.send(output_data)
+else:
+    send_file(file_sent)
+
 
 
 

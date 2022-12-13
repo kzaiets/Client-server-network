@@ -3,15 +3,27 @@ import pickle
 import json
 import xmltodict
 from cryptography.fernet import Fernet
+import logging
 from config import setup
 
+# logging setup
+log_format = f"%(levelname)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s"
+logging.basicConfig(level=logging.DEBUG, format=log_format)
+logger = logging.getLogger(__name__)
+
+# file setup
+output_file = "output.txt"
+file_received = "text_file.txt"
+key_file = 'my_key.key'
+
+# socket setup
 host = '127.0.0.1'
 port = 9000
 buffer = 1024
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((host, port))
-# set maximum accept rate to 1 connection"
+# set maximum accept rate to 5 connections"
 s.listen(5)
 
 
@@ -33,7 +45,7 @@ def key_load(key_name):
 
 
 def decrypt_file(text_file):
-    loaded_key = key_load('my_key.key')
+    loaded_key = key_load(key_file)
     fernet = Fernet(loaded_key)
     with open(text_file, "rb") as file:
         # read the encrypted data
@@ -42,7 +54,8 @@ def decrypt_file(text_file):
     try:
         decrypted_data = fernet.decrypt(encrypted_data)
     except Fernet.InvalidToken as e:
-        print(e)
+        logger.warning("Can't decrypt the file, invalid token or value")
+        decrypted_data = None
 
     # Write to the original file
     with open(text_file, "wb") as file:
@@ -57,8 +70,8 @@ def receive_file(text_file):
                 break
             try:
                 f.write(bytes_read)
-            except Exception as e:
-                print(e)
+            except TypeError:
+                logger.warning("TypeError occurred")
     if setup['encryption_file']:
         decrypt_file(text_file)
 
@@ -67,18 +80,18 @@ def output(contents):
     if setup['output'] == 'screen':
         print(contents)
     else:
-        with open("output.txt", 'w') as f:
-            f.write(contents)
+        with open(output_file, 'w') as f:
+            f.write(str(contents))
 
 
 client_socket, address = s.accept()
-print("Connection from: " + str(address))
+logger.debug("Connection from: " + str(address))
 if setup['sending'] == 'dictionary':
     message = client_socket.recv(buffer)
     output_content = deserialize_dict(setup['pickling_dict'], message)
 else:
-    receive_file("text_file.txt")
-    with open("text_file.txt", 'r') as f:
+    receive_file(file_received)
+    with open(file_received, 'r') as f:
         output_content = f.read()
 output(output_content)
 s.close()
