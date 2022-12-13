@@ -22,3 +22,4 @@ class TestServer(unittest.TestCase):
         with open("output.txt", "r") as in_file:
             actual_content = in_file.read()
         self.assertTrue(content == actual_content)
+

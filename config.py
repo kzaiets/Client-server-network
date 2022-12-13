@@ -1,7 +1,7 @@
 """Configuration options to transmit by a client to the server."""
 
 SETUP = {
-    "sending": "dictionary",  # options: ['dictionary', 'file']
+    "sending": "file",  # options: ['dictionary', 'file']
     "dictionary": {
         "USA": "Washington D.C.",
         "France": "Paris",

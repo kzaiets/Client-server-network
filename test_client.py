@@ -22,38 +22,20 @@ class TestClient(unittest.TestCase):
     def serialize_dict(self):
         """Tests client.serialize_dict with different encodings."""
         dictionary_example = {"a": 0, "b": 1}
-
-        actual_serialized_dict = serialize_dict(
-            pickling_format="binary",
-            dictionary=dictionary_example,
-        )
-        expected_serialized_dict = pickle.dumps(dictionary_example)
-        self.assertTrue(actual_serialized_dict == expected_serialized_dict)
-        unexpected_serialized_dict = json.dumps(dictionary_example).encode()
-        self.assertTrue(actual_serialized_dict != unexpected_serialized_dict)
-
-        actual_serialized_dict = serialize_dict(
-            pickling_format="JSON",
-            dictionary=dictionary_example,
-        )
-        expected_serialized_dict = pickle.dumps(dictionary_example)
-        self.assertTrue(actual_serialized_dict != expected_serialized_dict)
-        unexpected_serialized_dict = json.dumps(dictionary_example).encode()
-        self.assertTrue(actual_serialized_dict == unexpected_serialized_dict)
-
-        actual_serialized_dict = serialize_dict(
-            pickling_format="XML",
-            dictionary=dictionary_example,
-        )
-        unexpected_serialized_dict = pickle.dumps(dictionary_example)
-        self.assertTrue(actual_serialized_dict != unexpected_serialized_dict)
-        unexpected_serialized_dict = json.dumps(dictionary_example).encode()
-        self.assertTrue(actual_serialized_dict != unexpected_serialized_dict)
-        expected_serialized_dict = dict2xml(
+        # binary
+        serialized_dict_b = serialize_dict("binary", dictionary_example)
+        expected_serialized_dict_b = pickle.dumps(dictionary_example)
+        self.assertEqual(serialized_dict_b, expected_serialized_dict_b)
+        # json
+        serialized_dict_json = serialize_dict("JSON", dictionary_example)
+        expected_serialized_dict_json = pickle.dumps(dictionary_example)
+        self.assertEqual(serialized_dict_json, expected_serialized_dict_json)
+        # xml
+        serialized_dict_xml = serialize_dict("XML", dictionary_example)
+        expected_serialized_dict_xml = dict2xml(
             dictionary_example, wrap="root", indent=""
         ).encode()
-        self.assertTrue(actual_serialized_dict == expected_serialized_dict)
-
+        self.assertEqual(serialized_dict_xml, expected_serialized_dict_xml)
 
     def test_encrypt_file(self):
         """Tests client.encrypt_file function."""
@@ -71,3 +53,7 @@ class TestClient(unittest.TestCase):
 
             self.assertTrue(encrypted_text != "hola")
             self.assertTrue(actual_decrypted_text == expected_decrypted_text)
+
+
+
+

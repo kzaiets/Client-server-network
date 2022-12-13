@@ -4,15 +4,16 @@ import json
 import pickle
 import socket
 import xmltodict
+import cryptography
 from cryptography.fernet import Fernet
 import logging
 from config import SETUP
 
 # socket setup
 # source: https://peps.python.org/pep-0008/#constants
-HOST: str = "127.0.0.1"
-PORT: int = 9000
-BUFFER: int = 1024
+HOST = "127.0.0.1"
+PORT = 9000
+BUFFER = 1024
 
 
 # logging setup
@@ -67,7 +68,7 @@ def decrypt_file(text_path: str) -> None:
     # Decrypt data
     try:
         decrypted_data = fernet.decrypt(encrypted_data)
-    except Fernet.InvalidToken as e:
+    except cryptography.fernet.InvalidToken:
         logger.warning("Can't decrypt the file, invalid token or value")
         decrypted_data = None
     # Write to the original file
@@ -87,7 +88,7 @@ def receive_file(text_path: str) -> None:
             except TypeError:
                 logger.warning("TypeError occurred")
     if SETUP['encryption_file']:
-        decrypt_file(text_file)
+        decrypt_file(text_path)
 
 
 def output(content) -> None:
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     client_socket, address = s.accept()
     logger.debug("Connection from: " + str(address))
     if SETUP['sending'] == 'dictionary':
-        message = client_socket.recv(buffer)
+        message = client_socket.recv(BUFFER)
         output_content = deserialize_dict(SETUP['pickling_dict'], message)
     else:
         receive_file(file_received)
